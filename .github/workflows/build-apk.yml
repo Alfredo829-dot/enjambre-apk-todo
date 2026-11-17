@@ -1,0 +1,42 @@
+name: Build APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+      - name: Generar keystore de sideload
+        run: |
+          if [ ! -f app/enjambre.jks ]; then
+            keytool -genkeypair -keystore app/enjambre.jks -storepass android -keypass android -alias enjambre -dname "CN=Enjambre,O=Alfredo" -keyalg RSA -keysize 2048 -validity 10000 -deststoretype JKS
+          fi
+      - name: Compilar APK firmado
+        run: gradle :app:assembleRelease --no-daemon
+      - name: Publicar Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          APK=$(find app/build/outputs/apk -name "*.apk" | head -1)
+          test -n "$APK"
+          TAG="apk-r${GITHUB_RUN_NUMBER}"
+          cp "$APK" "app-release.apk"
+          gh release create "$TAG" "app-release.apk" --title "APK r${GITHUB_RUN_NUMBER}" --notes "APK de Enjambre 7, firmado en GitHub Actions con una clave de sideload (sirve para instalar en el teléfono; no es una clave de Play Store)."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: app-release.apk

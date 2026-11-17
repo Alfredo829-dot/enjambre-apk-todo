@@ -1,0 +1,5 @@
+app/enjambre.jks
+*.jks
+app/build
+.gradle
+local.properties

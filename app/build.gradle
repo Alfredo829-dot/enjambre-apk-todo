@@ -1,0 +1,38 @@
+plugins { id "com.android.application" }
+android {
+    namespace "mx.enjambre.app"
+    compileSdk 34
+    defaultConfig {
+        applicationId "dot.alfredo829.enjambretodo"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+        resValue "string", "app_name", "Pendientes"
+    }
+    signingConfigs {
+        release {
+            def ks = file("enjambre.jks")
+            if (ks.exists()) {
+                storeFile ks
+                storePassword System.getenv("KEYSTORE_PASSWORD") ?: "android"
+                keyAlias "enjambre"
+                keyPassword System.getenv("KEY_PASSWORD") ?: "android"
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+        debug { minifyEnabled false }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+dependencies {
+    implementation "androidx.webkit:webkit:1.12.1"
+}

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b12">
+  <title>Pendientes</title>
+  <style>
+    :root{--bg:#0b0b12;--p:#14141f;--b:#2a2a3d;--t:#f4f4f8;--m:#a1a1b5;--a:#7c3aed}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:var(--t);min-height:100dvh;padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))}
+    h1{font-size:1.4rem;margin:0 0 12px}
+    form{display:flex;gap:8px;margin-bottom:14px}
+    input,button{font:inherit;min-height:44px;border-radius:12px;border:1px solid var(--b);background:var(--p);color:var(--t);padding:0 12px}
+    input{flex:1}
+    button{background:var(--a);border-color:transparent;font-weight:700;cursor:pointer}
+    button.ghost{background:transparent;border-color:var(--b);color:var(--m);font-weight:600}
+    li{list-style:none;display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--b);border-radius:12px;margin:0 0 8px;background:var(--p)}
+    ul{margin:0;padding:0}
+    li.done span{text-decoration:line-through;color:var(--m)}
+    .ok{font-size:13px;color:var(--m);margin-top:10px}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Pendientes</h1>
+    <form id="f" autocomplete="off">
+      <input id="in" maxlength="200" required placeholder="¿Qué sigue?" aria-label="Nueva tarea">
+      <button type="submit">Agregar</button>
+    </form>
+    <ul id="lista"></ul>
+    <button type="button" class="ghost" id="limpiar" hidden>Quitar las hechas</button>
+    <p class="ok">Se guarda en este aparato.</p>
+  </main>
+  <script>
+    const K='pendientes-e7';
+    const lista=document.getElementById('lista');
+    const input=document.getElementById('in');
+    const limpiar=document.getElementById('limpiar');
+    let items=JSON.parse(localStorage.getItem(K)||'[]');
+    if(!Array.isArray(items)) items=[];
+    function save(){localStorage.setItem(K,JSON.stringify(items));pintar();}
+    function pintar(){
+      lista.innerHTML='';
+      items.forEach((it,i)=>{
+        const li=document.createElement('li');
+        if(it.done) li.className='done';
+        const b=document.createElement('input');
+        b.type='checkbox'; b.checked=!!it.done; b.setAttribute('aria-label','Hecha');
+        b.onchange=()=>{items[i].done=!items[i].done;save();};
+        const s=document.createElement('span'); s.textContent=it.t; s.style.flex='1';
+        const x=document.createElement('button'); x.type='button'; x.className='ghost'; x.textContent='Quitar';
+        x.onclick=()=>{items.splice(i,1);save();};
+        li.append(b,s,x); lista.append(li);
+      });
+      limpiar.hidden=!items.some(x=>x.done);
+    }
+    document.getElementById('f').onsubmit=e=>{
+      e.preventDefault();
+      const t=input.value.trim(); if(!t) return;
+      items.unshift({t,done:false}); input.value=''; save();
+    };
+    limpiar.onclick=()=>{items=items.filter(x=>!x.done);save();};
+    pintar();
+  </script>
+</body>
+</html>
